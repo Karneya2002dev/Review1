@@ -69,7 +69,7 @@ const UserSidebar = ({ setActive }) => {
   };
 
   return (
-    <div className="w-[260px] bg-[#eef3ef] p-4 rounded-xl">
+    <div className="w-65 bg-[#eef3ef] p-4 rounded-xl">
       <h2 className="text-lg font-semibold mb-3">Categories</h2>
 
       <div className="bg-white rounded-lg border overflow-hidden">

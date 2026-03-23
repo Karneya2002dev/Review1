@@ -20,20 +20,41 @@ import {
 ChartJS.register(ArcElement, BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function Dashboard() {
-  const [counts, setCounts] = useState({});
+  const [counts, setCounts] = useState({
+  totalCategories: 0,
+  totalProducts: 0,
+  totalSubcategories: 0,
+  totalUsers: 0,
+  totalOrders: 0
+});
   const [categoryStats, setCategoryStats] = useState([]);
   const [monthly, setMonthly] = useState([]);
+  const [orderStats, setOrderStats] = useState([]);
+const [userMonthly, setUserMonthly] = useState([]);
 
   useEffect(() => {
-    axios.get("http://localhost:5000/api/dashboard/counts")
-      .then(res => setCounts(res.data));
+  axios.get("http://localhost:5000/api/dashboard/counts")
+    .then(res => setCounts(res.data));
 
-    axios.get("http://localhost:5000/api/dashboard/category-stats")
-      .then(res => setCategoryStats(res.data));
+  axios.get("http://localhost:5000/api/dashboard/category-stats")
+    .then(res => setCategoryStats(res.data));
 
-    axios.get("http://localhost:5000/api/dashboard/monthly-products")
-      .then(res => setMonthly(res.data));
-  }, []);
+  axios.get("http://localhost:5000/api/dashboard/monthly-products")
+    .then(res => setMonthly(res.data));
+
+  // ✅ NEW APIs
+  axios.get("http://localhost:5000/api/dashboard/users-count")
+    .then(res => setCounts(prev => ({ ...prev, totalUsers: res.data.totalUsers })));
+
+  axios.get("http://localhost:5000/api/dashboard/orders-count")
+    .then(res => setCounts(prev => ({ ...prev, totalOrders: res.data.totalOrders })));
+
+    axios.get("http://localhost:5000/api/dashboard/orders-by-status")
+  .then(res => setOrderStats(res.data));
+  axios.get("http://localhost:5000/api/dashboard/monthly-users")
+  .then(res => setUserMonthly(res.data));
+
+}, []);
 
   // Pie Chart (Different shades of green)
 const pieData = {
@@ -69,6 +90,7 @@ const barData = {
 };
  
 
+
 const options = {
   plugins: {
     legend: {
@@ -90,6 +112,32 @@ const options = {
   }
 };
 
+const orderPieData = {
+  labels: orderStats.map(o => o.status),
+  datasets: [
+    {
+      data: orderStats.map(o => o.total),
+      backgroundColor: [
+        "#10b981", // delivered
+        "#3b82f6", // processing
+        "#f59e0b", // placed
+        "#ef4444"  // cancelled
+      ]
+    }
+  ]
+};
+
+const userBarData = {
+  labels: userMonthly.map(u => `Month ${u.month}`),
+  datasets: [
+    {
+      label: "Users",
+      data: userMonthly.map(u => u.total),
+      backgroundColor: "#3b82f6"
+    }
+  ]
+};
+
  return (
   <div className="flex bg-gray-100 min-h-screen">
     <Sidebar />
@@ -106,11 +154,13 @@ const options = {
         </h1>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatCard title="Categories" value={counts.totalCategories} />
-          <StatCard title="Products" value={counts.totalProducts} />
-          <StatCard title="Subcategories" value={counts.totalSubcategories} />
-        </div>
+       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
+  <StatCard title="Categories" value={counts.totalCategories} />
+  <StatCard title="Products" value={counts.totalProducts} />
+  <StatCard title="Subcategories" value={counts.totalSubcategories} />
+  <StatCard title="Users" value={counts.totalUsers} />
+  <StatCard title="Orders" value={counts.totalOrders} />
+</div>
 
         {/* Charts Section */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-8">
@@ -138,6 +188,17 @@ const options = {
           </div>
 
         </div>
+
+<div className="bg-white p-6 rounded-2xl shadow-sm border mt-8">
+  <h2 className="text-lg font-semibold text-gray-700 mb-4">
+    Orders Status Distribution
+  </h2>
+
+  <div className="h-75 flex items-center justify-center">
+    <Pie data={orderPieData} options={options} />
+  </div>
+</div>
+
 
       </div>
     </div>

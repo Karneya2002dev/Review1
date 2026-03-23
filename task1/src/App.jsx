@@ -9,6 +9,13 @@ import LineChart from './Component/Admin/Charts/LineChart'
 import PieChart from './Component/Admin/Charts/PieChart'
 import Home from './Component/User/HomePage/Home'
 import CategoryProducts from './Component/User/HomePage/CategoryProducts'
+import CartPage from './Component/CartPage'
+import Signup from './Login/Signup'
+import Login from './Login/Login'
+import CheckOutPages from './Component/CheckOutPages'
+import OrderSucess from './Component/OrderSucess'
+import Orders from './Component/Orders'
+import Order from './Component/Admin/Pages/Order'
 
 const App = () => {
   return (
@@ -17,6 +24,13 @@ const App = () => {
       {/* User Routes */}
       <Route path='/' element={<Home />} />
      <Route path="/category/:id" element={<CategoryProducts />} />
+     <Route path="/cart" element={<CartPage />} />
+     <Route path="/signup" element={<Signup />} />
+     <Route path="/login" element={<Login />} />
+     <Route path="/checkout" element={<CheckOutPages />} />
+     <Route path="/order-success/:id" element={<OrderSucess />} />
+     <Route path="/orders" element={<Orders />} />
+
 
 
 
@@ -29,6 +43,7 @@ const App = () => {
 <Route path='/admin/barchart' element={<BarChart />} />
 <Route path='/admin/linechart' element={<LineChart />} />
 <Route path='/admin/piechart' element={<PieChart />} />
+<Route path='/admin/orders' element={<Order />} />
     </Routes>
     
     </>

@@ -9,6 +9,8 @@ export default function Sidebar() {
     { name: "Categories", path: "/admin/categories", icon: Layers },
     { name: "Subcategories", path: "/admin/subcategories", icon: Layers },
     { name: "Products", path: "/admin/products", icon: Box },
+    { name: "Users", path: "/admin/users", icon: Box },
+    { name: "Orders", path: "/admin/orders", icon: Box },
   ];
 
   return (
