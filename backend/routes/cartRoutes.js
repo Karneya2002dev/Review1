@@ -93,38 +93,72 @@ router.get("/count/:user_id", (req, res) => {
 });
 
 // ✅ DECREASE QTY
-router.post("/api/cart/decrease", (req, res) => {
-  const { user_id, product_id } = req.body;
+// router.post("/api/cart/decrease", (req, res) => {
+//   const { user_id, product_id } = req.body;
 
-  const checkQuery = `
-    SELECT quantity FROM cart 
-    WHERE user_id = ? AND product_id = ?
-  `;
+//   const checkQuery = `
+//     SELECT quantity FROM cart 
+//     WHERE user_id = ? AND product_id = ?
+//   `;
 
-  db.query(checkQuery, [user_id, product_id], (err, result) => {
+//   db.query(checkQuery, [user_id, product_id], (err, result) => {
+//     if (err) return res.status(500).json(err);
+
+//     if (result.length === 0) {
+//       return res.json({ message: "Item not in cart" });
+//     }
+
+//     const currentQty = result[0].quantity;
+
+//     if (currentQty <= 1) {
+//       // delete item if qty becomes 0
+//       db.query(
+//         "DELETE FROM cart WHERE user_id=? AND product_id=?",
+//         [user_id, product_id],
+//         (err2) => {
+//           if (err2) return res.status(500).json(err2);
+//           return res.json({ message: "Item removed from cart" });
+//         }
+//       );
+//     } else {
+//       // decrease quantity
+//       db.query(
+//         "UPDATE cart SET quantity = quantity - 1 WHERE user_id=? AND product_id=?",
+//         [user_id, product_id],
+//         (err3) => {
+//           if (err3) return res.status(500).json(err3);
+//           return res.json({ message: "Quantity decreased" });
+//         }
+//       );
+//     }
+//   });
+// });
+
+// ✅ DECREASE QTY (FIXED)
+router.put("/decrease/:id", (req, res) => {
+  const { id } = req.params;
+
+  // 🔥 FIRST GET CURRENT QTY
+  db.query("SELECT quantity FROM cart WHERE id = ?", [id], (err, result) => {
     if (err) return res.status(500).json(err);
 
     if (result.length === 0) {
-      return res.json({ message: "Item not in cart" });
+      return res.status(404).json({ message: "Item not found" });
     }
 
-    const currentQty = result[0].quantity;
+    const qty = result[0].quantity;
 
-    if (currentQty <= 1) {
-      // delete item if qty becomes 0
-      db.query(
-        "DELETE FROM cart WHERE user_id=? AND product_id=?",
-        [user_id, product_id],
-        (err2) => {
-          if (err2) return res.status(500).json(err2);
-          return res.json({ message: "Item removed from cart" });
-        }
-      );
+    if (qty <= 1) {
+      // ✅ DELETE ITEM
+      db.query("DELETE FROM cart WHERE id = ?", [id], (err2) => {
+        if (err2) return res.status(500).json(err2);
+        return res.json({ message: "Item removed" });
+      });
     } else {
-      // decrease quantity
+      // ✅ DECREASE QTY
       db.query(
-        "UPDATE cart SET quantity = quantity - 1 WHERE user_id=? AND product_id=?",
-        [user_id, product_id],
+        "UPDATE cart SET quantity = quantity - 1 WHERE id = ?",
+        [id],
         (err3) => {
           if (err3) return res.status(500).json(err3);
           return res.json({ message: "Quantity decreased" });

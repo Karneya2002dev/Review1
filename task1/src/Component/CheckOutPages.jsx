@@ -7,6 +7,8 @@ const CheckoutPage = () => {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  // ✅ check if any product is out of stock
+const isOutOfStock = cartItems.some(item => item.stock === 0);
 
   const user_id = localStorage.getItem("user_id");
   const [paymentMethod, setPaymentMethod] = useState("cod");
@@ -27,7 +29,7 @@ const CheckoutPage = () => {
 
   const fetchUser = async () => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/user/${user_id}`);
+     const res = await axios.get(`http://localhost:5000/api/users/${user_id}`);
       setForm({
         name: res.data?.name || "",
         phone: res.data?.phone || "",
@@ -59,14 +61,14 @@ const CheckoutPage = () => {
 
   const updateAddress = async () => {
     try {
-      await axios.put(`http://localhost:5000/api/user/${user_id}`, form);
+      await axios.put(`http://localhost:5000/api/users/${user_id}`, form);
       alert("Address updated ✅");
     } catch (err) {
       alert("Failed to update address ❌");
     }
   };
 
-  const handleOrder = async () => {
+ const handleOrder = async () => {
   if (!form.name || !form.phone || !form.address) {
     alert("Please fill all required fields");
     return;
@@ -78,25 +80,21 @@ const CheckoutPage = () => {
       address: form,
       total: totalPrice,
       payment_method: paymentMethod,
-    items: cartItems, 
-      
     });
 
-    const orderNumber = res.data.order_number; // ✅ get id
+    const orderNumber = res.data.order_number;
 
+    // ✅ refresh cart globally
     window.dispatchEvent(new Event("cartUpdated"));
 
-    // 🔥 PASS ID HERE
-navigate(`/order-success/${orderNumber}`);
-
-
+    // ✅ navigate to success page
+    navigate(`/order-success/${orderNumber}`);
 
   } catch (err) {
-    console.log(err);
-    alert("Order failed ❌");
+    console.log("ORDER ERROR:", err.response?.data || err);
+    alert(err.response?.data?.message || "Order failed ❌");
   }
 };
-
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-4 bg-[#F0F4F2]">
@@ -268,12 +266,21 @@ navigate(`/order-success/${orderNumber}`);
             </div>
 
             {/* ORDER BUTTON */}
-            <button
-              onClick={handleOrder}
-              className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition active:scale-95"
-            >
-              Place Order
-            </button>
+{isOutOfStock ? (
+  <button
+    disabled
+    className="w-full mt-6 bg-gray-400 text-white py-3 rounded-xl cursor-not-allowed"
+  >
+    Some items are out of stock ❌
+  </button>
+) : (
+  <button
+    onClick={handleOrder}
+    className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-semibold transition active:scale-95"
+  >
+    Place Order
+  </button>
+)}
 
             {/* TRUST BADGES */}
             <div className="flex justify-center gap-4 mt-5 text-slate-400 text-xs">

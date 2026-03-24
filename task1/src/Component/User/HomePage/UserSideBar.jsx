@@ -1,109 +1,112 @@
-// components/Sidebar.jsx
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { ChevronLeft, ChevronRight } from "lucide-react"; // For a cleaner look
 
-const UserSidebar = ({ setActive }) => {
+const UserSidebar = ({ setActiveCategory, setActiveSubCategory }) => {
   const [categories, setCategories] = useState([]);
   const [stack, setStack] = useState([]);
-  const navigate = useNavigate();
+  const [activeId, setActiveId] = useState(null);
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const res = await axios.get("http://localhost:5000/api/categories");
-        setCategories(res.data);
-      } catch (err) {
-        console.error("Error fetching categories", err);
-      }
-    };
-
-    fetchCategories();
+    axios
+      .get("http://localhost:5000/api/categories")
+      .then((res) => setCategories(res.data))
+      .catch((err) => console.error(err));
   }, []);
 
-  // Current level
   const currentLevel =
     stack.length === 0
       ? categories
       : stack[stack.length - 1].subCategories || [];
 
-  // 🔥 Handle Click
   const handleClick = (item) => {
     if (item.subCategories && item.subCategories.length > 0) {
-      // go deeper
       setStack([...stack, item]);
     } else {
-      // FINAL LEVEL → Navigate
-      const parent = stack[0]?.name || item.name;
-      const sub = item.name;
-
-      setActive(sub);
-
-      navigate(
-        `/products?category=${encodeURIComponent(
-          parent
-        )}&sub=${encodeURIComponent(sub)}`
-      );
-
-      // optional: reset stack after selection
-      setStack([]);
+      setActiveCategory(stack[0]?.id || item.category_id || item.id);
+      setActiveSubCategory(item.id);
+      setActiveId(item.id);
     }
   };
 
-  // 🔙 Back
-  const handleBack = () => {
+  const handleTopLevelClick = (item) => {
+    if (!item.subCategories || item.subCategories.length === 0) {
+      setActiveCategory(item.id);
+      setActiveSubCategory(null);
+      setActiveId(item.id);
+    } else {
+      setStack([item]);
+      setActiveId(item.id);
+    }
+  };
+
+  const handleBack = (e) => {
+    e.stopPropagation(); // Prevent trigger parent click
     setStack((prev) => prev.slice(0, -1));
   };
 
-  // 🧠 Navigate when clicking top-level category (without subcategories)
-  const handleTopLevelClick = (item) => {
-    if (!item.subCategories || item.subCategories.length === 0) {
-      setActive(item.name);
-
-      navigate(
-        `/products?category=${encodeURIComponent(item.name)}`
-      );
-    } else {
-      setStack([item]);
-    }
-  };
-
   return (
-    <div className="w-65 bg-[#eef3ef] p-4 rounded-xl">
-      <h2 className="text-lg font-semibold mb-3">Categories</h2>
+    /* Responsive Container: 
+       - w-full on mobile, fixed w-64/72 on desktop 
+       - Adjusts margins/padding for different screen sizes
+    */
+    <div className="w-full lg:w-72 bg-[#eef3ef] p-3 md:p-4 lg:rounded-xl">
+      <h2 className="text-base md:text-lg font-bold mb-3 text-gray-800 px-1">
+        Categories
+      </h2>
 
-      <div className="bg-white rounded-lg border overflow-hidden">
+      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-sm">
         
-        {/* Header */}
-        <div className="bg-green-600 text-white px-4 py-3 flex items-center gap-2">
+        {/* HEADER: Dynamic height for touch targets */}
+        <div className="bg-green-600 text-white px-4 py-3 md:py-4 flex items-center gap-3">
           {stack.length > 0 && (
-            <button onClick={handleBack} className="font-bold">
-              ←
+            <button 
+              onClick={handleBack}
+              className="hover:bg-green-700 p-1 rounded-full transition-colors"
+              aria-label="Go back"
+            >
+              <ChevronLeft size={20} />
             </button>
           )}
-          <span>
+          <span className="font-medium text-sm md:text-base truncate">
             {stack.length === 0
               ? "All Categories"
               : stack[stack.length - 1].name}
           </span>
         </div>
 
-        {/* List */}
-        <div className="p-2">
-          {currentLevel.map((item) => (
-            <div
-              key={item._id}
-              onClick={() =>
-                stack.length === 0
-                  ? handleTopLevelClick(item)
-                  : handleClick(item)
-              }
-              className="flex justify-between items-center px-3 py-2 rounded-md cursor-pointer hover:bg-gray-100"
-            >
-              <span>{item.name}</span>
-              {item.subCategories?.length > 0 && <span>›</span>}
+        {/* LIST: Uses a scroll area for long lists on mobile */}
+        <div className="p-1 md:p-2 max-h-[60vh] lg:max-h-none overflow-y-auto">
+          {currentLevel.length > 0 ? (
+            currentLevel.map((item) => {
+              const isActive = activeId === item.id;
+
+              return (
+                <div
+                  key={item.id}
+                  onClick={() =>
+                    stack.length === 0
+                      ? handleTopLevelClick(item)
+                      : handleClick(item)
+                  }
+                  className={`px-3 py-3 md:py-2.5 my-1 rounded-md cursor-pointer flex justify-between items-center transition-all
+                    ${isActive 
+                      ? "bg-green-100 text-green-700 font-semibold border-l-4 border-green-600" 
+                      : "hover:bg-gray-100 text-gray-600 active:bg-gray-200"}
+                  `}
+                >
+                  <span className="text-sm md:text-base">{item.name}</span>
+                  {item.subCategories?.length > 0 && (
+                    <ChevronRight size={16} className={isActive ? "text-green-600" : "text-gray-400"} />
+                  )}
+                </div>
+              );
+            })
+          ) : (
+            <div className="p-4 text-center text-gray-400 text-sm italic">
+              No categories found
             </div>
-          ))}
+          )}
         </div>
       </div>
     </div>

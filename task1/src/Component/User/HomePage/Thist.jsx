@@ -3,6 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 const ProductSlider = () => {
+  
   const [products, setProducts] = useState([]);
   const [cartQty, setCartQty] = useState({}); // 🔥 store qty per product
 
@@ -53,30 +54,39 @@ useEffect(() => {
   };
 
   // 🔥 ADD TO CART + ANIMATION
-  const addToCart = async (productId) => {
-    try {
-      await axios.post("http://localhost:5000/api/cart/add", {
-        user_id,
-        product_id: productId,
-      });
+  const addToCart = async (productId, stock) => {
+  if (stock <= 0) {
+    alert("Out of Stock ❌");
+    return;
+  }
 
-      // ✅ update local qty
-      setCartQty((prev) => ({
-        ...prev,
-        [productId]: (prev[productId] || 0) + 1,
-      }));
+  try {
+    await axios.post("http://localhost:5000/api/cart/add", {
+      user_id,
+      product_id: productId,
+    });
 
-      animateToCart(productId);
+    setCartQty((prev) => ({
+      ...prev,
+      [productId]: (prev[productId] || 0) + 1,
+    }));
 
-    } catch (error) {
-      console.log(error);
-    }
-  };
+    animateToCart(productId);
+
+  } catch (error) {
+    console.log(error);
+  }
+};
 
   // 🔥 INCREASE
-  const increaseQty = async (productId) => {
-    await addToCart(productId);
-  };
+ const increaseQty = async (productId, stock) => {
+  if ((cartQty[productId] || 0) >= stock) {
+    alert("No more stock available ❌");
+    return;
+  }
+
+  await addToCart(productId, stock);
+};
 
   // 🔥 DECREASE
   const decreaseQty = async (productId) => {
@@ -86,7 +96,7 @@ useEffect(() => {
         `http://localhost:5000/api/cart/${user_id}`
       );
 
-      const item = res.data.find((i) => i.id === productId);
+const item = res.data.find((i) => i.product_id === productId);
 
       if (!item) return;
 
@@ -154,28 +164,49 @@ useEffect(() => {
   };
 
   return (
-    <div className="bg-[#eef6f2] py-10 px-6">
-      <h2 className="text-3xl font-semibold text-center mb-8">
-        Best Selling Products
-      </h2>
+  <div className="bg-[#eef6f2] py-12 px-6">
+    <h2 className="text-3xl font-bold text-center mb-10 text-gray-800">
+      Best Selling Products
+    </h2>
 
-      <div className="flex gap-6 overflow-x-auto pb-2">
+    <div className="flex gap-6 overflow-x-auto pb-4">
 
-        {products.map((item) => (
-          <div
-            key={item.id}
-            className="min-w-60 bg-white rounded-2xl shadow-sm border hover:shadow-md transition p-4"
-          >
-            {/* IMAGE */}
+      {products.map((item) => (
+        <div
+          key={item.id}
+          className="min-w-60 bg-white rounded-2xl border shadow-sm hover:shadow-xl transition-all duration-300 group"
+        >
+          {/* IMAGE */}
+          <div className="relative p-4">
             <img
               id={`product-img-${item.id}`}
               src={`http://localhost:5000/uploads/${item.image}`}
               alt={item.name}
-              className="h-40 mx-auto object-contain"
+              className="h-40 mx-auto object-contain group-hover:scale-105 transition"
             />
 
+            {/* 🔥 STOCK BADGE */}
+            <span
+              className={`absolute top-3 left-3 text-xs px-2 py-1 rounded-full font-semibold ${
+                item.stock === 0
+                  ? "bg-red-100 text-red-600"
+                  : item.stock <= 5
+                  ? "bg-yellow-100 text-yellow-700"
+                  : "bg-green-100 text-green-600"
+              }`}
+            >
+              {item.stock === 0
+                ? "Out of Stock"
+                : item.stock <= 5
+                ? `Only ${item.stock} left`
+                : "In Stock"}
+            </span>
+          </div>
+
+          {/* CONTENT */}
+          <div className="px-4 pb-4">
             {/* NAME */}
-            <h3 className="font-medium mt-4 text-gray-800">
+            <h3 className="font-semibold text-gray-800 text-sm line-clamp-2 min-h-10">
               {item.name}
             </h3>
 
@@ -185,39 +216,49 @@ useEffect(() => {
             </p>
 
             {/* 🔥 BUTTON / QTY */}
-            {cartQty[item.id] ? (
-              <div className="flex items-center justify-between mt-4 bg-gray-100 rounded-lg p-2">
+            {item.stock === 0 ? (
+              <button
+                disabled
+                className="bg-gray-300 text-gray-600 w-full py-2 mt-4 rounded-lg cursor-not-allowed text-sm font-semibold"
+              >
+                Out of Stock
+              </button>
+            ) : cartQty[item.id] ? (
+              <div className="flex items-center justify-between mt-4 bg-gray-100 rounded-lg p-1.5">
                 <button
                   onClick={() => decreaseQty(item.id)}
-                  className="px-3 py-1 bg-white rounded shadow"
+                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow hover:bg-gray-200"
                 >
                   -
                 </button>
 
-                <span className="font-bold">
+                <span className="font-bold text-gray-800">
                   {cartQty[item.id]}
                 </span>
 
                 <button
-                  onClick={() => increaseQty(item.id)}
-                  className="px-3 py-1 bg-white rounded shadow"
+                  onClick={() => increaseQty(item.id, item.stock)}
+                  className="w-8 h-8 flex items-center justify-center bg-white rounded shadow hover:bg-gray-200"
                 >
                   +
                 </button>
               </div>
             ) : (
               <button
-                onClick={() => addToCart(item.id)}
-                className="bg-[#019147] hover:bg-green-700 text-white w-full py-2 mt-4 rounded-lg transition"
+                onClick={() => addToCart(item.id, item.stock)}
+                className="bg-[#019147] hover:bg-green-700 text-white w-full py-2 mt-4 rounded-lg transition font-semibold text-sm shadow-sm"
               >
                 Add to Cart
               </button>
             )}
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
+
     </div>
-  );
+  </div>
+);
+
 };
 
 export default ProductSlider;

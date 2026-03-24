@@ -26,3 +26,12 @@
 .scrollbar-hide {
   scrollbar-width: none;
 }
+
+/* global.css */
+::-webkit-scrollbar {
+  height: 6px;
+}
+::-webkit-scrollbar-thumb {
+  background: #019147;
+  border-radius: 10px;
+}

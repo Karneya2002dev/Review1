@@ -16,6 +16,7 @@ import CheckOutPages from './Component/CheckOutPages'
 import OrderSucess from './Component/OrderSucess'
 import Orders from './Component/Orders'
 import Order from './Component/Admin/Pages/Order'
+import Users from './Component/Admin/Pages/Users'
 
 const App = () => {
   return (
@@ -30,6 +31,7 @@ const App = () => {
      <Route path="/checkout" element={<CheckOutPages />} />
      <Route path="/order-success/:id" element={<OrderSucess />} />
      <Route path="/orders" element={<Orders />} />
+ 
 
 
 
@@ -44,6 +46,7 @@ const App = () => {
 <Route path='/admin/linechart' element={<LineChart />} />
 <Route path='/admin/piechart' element={<PieChart />} />
 <Route path='/admin/orders' element={<Order />} />
+    <Route path="/admin/users" element={<Users />} />
     </Routes>
     
     </>
